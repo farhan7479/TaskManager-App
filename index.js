@@ -1,45 +1,41 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const userModel = require('./models/user');
+const express = require("express");
+require("colors");
+require("dotenv").config();
+const morgan = require("morgan");
+const connectDB = require("./config/db.js");
+const cors = require("cors");
+const authRoutes = require("./routes/auth.js");
+const tasksRoutes = require('./routes/taskRoute.js');
+
+// Configure database connection
+connectDB();
 
 const app = express();
 
-app.use(cors());
+// Middleware
+const corsOptions = {
+  origin: "https://salmon-pilot-ylsby.pwskills.app:3000",
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(morgan("dev"));
 
-mongoose.connect('mongodb://localhost:27017/db',
-  { useNewUrlParser: true, useUnifiedTopology: true }
-);
+// Routes
+app.use("/api/v1/auth", authRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
+app.use('/api/v1/tasks', tasksRoutes);
+
+// Default route
+app.get("/", (req, res) => {
+  res.send("<h1>Welcome to the ecommerce app</h1>");
 });
 
-app.post('/user/create', async (req, res) => {
-  const { username } = req.body;
+// Set the port
+const PORT = process.env.PORT || 8080;
 
-  // Create a new user in the database
-  const newUser = await userModel.create({
-    username,
-  });
-
-  res.json({
-    message: 'User created successfully',
-    data: newUser,
-  });
-});
-
-app.get('/users', async (req, res) => {
-  // Get all users from the database
-  const users = await userModel.find({});
-
-  res.json({
-    message: 'Users fetched successfully',
-    data: users,
-  })
-});
-
-app.listen(4000, () => {
-  console.log('Server started on port 4000');
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running in ${process.env.DEV_MODE} mode on port ${PORT}`.bgCyan.white);
 });
